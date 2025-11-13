@@ -8,7 +8,7 @@ import { Building2, TrendingUp, FileText, Calendar } from 'lucide-react';
 export default function DepartmentAnalysis() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDept, setSelectedDept] = useState('');
+  const [selectedDept, setSelectedDept] = useState<string>('');
 
   useEffect(() => {
     fetchPolicies();
@@ -19,10 +19,15 @@ export default function DepartmentAnalysis() {
       const response = await fetch('/api/policies');
       const result = await response.json();
       setPolicies(result.data);
-      if (result.data.length > 0) {
+      if (result.data && result.data.length > 0) {
         // Set first department as default
-        const firstDept = [...new Set(result.data.map((p: Policy) => p.dept))][0];
-        setSelectedDept(firstDept);
+        const depts = [...new Set(result.data
+          .map((p: Policy) => p.dept)
+          .filter((d): d is string => typeof d === 'string' && d.length > 0))];
+          
+        if (depts.length > 0) {
+          setSelectedDept(depts[0]);
+        }
       }
     } catch (error) {
       console.error('Error fetching policies:', error);
@@ -31,14 +36,14 @@ export default function DepartmentAnalysis() {
     }
   };
 
-  const departments = [...new Set(policies.map(p => p.dept))].sort();
+  const departments = [...new Set(policies.map(p => p.dept).filter((d): d is string => Boolean(d)))].sort();
 
   // Department overview stats
   const getDepartmentStats = () => {
     return departments.map(dept => {
       const deptPolicies = policies.filter(p => p.dept === dept);
-      const avgScore = deptPolicies.reduce((sum, p) => sum + p.relevance_score, 0) / deptPolicies.length;
-      const highPriority = deptPolicies.filter(p => p.relevance_score >= 7).length;
+      const avgScore = deptPolicies.reduce((sum, p) => sum + (p.relevance_score || 0), 0) / Math.max(1, deptPolicies.length);
+      const highPriority = deptPolicies.filter(p => (p.relevance_score || 0) >= 7).length;
       
       return {
         dept,
@@ -52,17 +57,22 @@ export default function DepartmentAnalysis() {
 
   // Selected department deep dive
   const getSelectedDeptData = () => {
+    if (!selectedDept) return null;
+    
     const deptPolicies = policies.filter(p => p.dept === selectedDept);
+    if (deptPolicies.length === 0) return null;
     
     // Policy types
     const policyTypes = deptPolicies.reduce((acc, p) => {
-      acc[p.policy_type] = (acc[p.policy_type] || 0) + 1;
+      if (p.policy_type) {
+        acc[p.policy_type] = (acc[p.policy_type] || 0) + 1;
+      }
       return acc;
     }, {} as Record<string, number>);
 
     // Timeline
     const timeline = deptPolicies.reduce((acc, p) => {
-      const period = p.year_month;
+      const period = p.year_month || 'Unknown';
       if (!acc[period]) acc[period] = 0;
       acc[period]++;
       return acc;
@@ -70,27 +80,31 @@ export default function DepartmentAnalysis() {
 
     // Sectors
     const sectors = deptPolicies.reduce((acc, p) => {
-      acc[p.sector_focus] = (acc[p.sector_focus] || 0) + 1;
+      if (p.sector_focus) {
+        acc[p.sector_focus] = (acc[p.sector_focus] || 0) + 1;
+      }
       return acc;
     }, {} as Record<string, number>);
 
     // AI Applications
     const applications = deptPolicies.reduce((acc, p) => {
-      acc[p.ai_application] = (acc[p.ai_application] || 0) + 1;
+      if (p.ai_application) {
+        acc[p.ai_application] = (acc[p.ai_application] || 0) + 1;
+      }
       return acc;
     }, {} as Record<string, number>);
 
     return {
       total: deptPolicies.length,
-      avgScore: (deptPolicies.reduce((sum, p) => sum + p.relevance_score, 0) / deptPolicies.length).toFixed(1),
-      highPriority: deptPolicies.filter(p => p.relevance_score >= 7).length,
+      avgScore: (deptPolicies.reduce((sum, p) => sum + (p.relevance_score || 0), 0) / Math.max(1, deptPolicies.length)).toFixed(1),
+      highPriority: deptPolicies.filter(p => (p.relevance_score || 0) >= 7).length,
       requiresAction: deptPolicies.filter(p => p.requires_action === 'Yes').length,
       policyTypes: Object.entries(policyTypes).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
       timeline: Object.entries(timeline).map(([period, count]) => ({ period, count })).sort((a, b) => a.period.localeCompare(b.period)).slice(-12),
       sectors: Object.entries(sectors).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5),
       applications: Object.entries(applications).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5),
       recent: deptPolicies.filter(p => p.recency === 'Last month' || p.recency === 'Last 3 months').length
-    };
+    } as const;
   };
 
   // Department comparison radar
@@ -99,9 +113,9 @@ export default function DepartmentAnalysis() {
       const deptPolicies = policies.filter(p => p.dept === dept);
       if (deptPolicies.length === 0) return null;
       
-      const avgScore = deptPolicies.reduce((sum, p) => sum + p.relevance_score, 0) / deptPolicies.length;
-      const highPriorityPct = (deptPolicies.filter(p => p.relevance_score >= 7).length / deptPolicies.length) * 100;
-      const recentPct = (deptPolicies.filter(p => p.days_since_published <= 180).length / deptPolicies.length) * 100;
+      const avgScore = deptPolicies.reduce((sum, p) => sum + (p.relevance_score || 0), 0) / deptPolicies.length;
+      const highPriorityPct = (deptPolicies.filter(p => (p.relevance_score || 0) >= 7).length / deptPolicies.length) * 100;
+      const recentPct = (deptPolicies.filter(p => (p.days_since_published || 0) <= 180).length / deptPolicies.length) * 100;
       
       return {
         department: dept,
@@ -110,7 +124,7 @@ export default function DepartmentAnalysis() {
         'Recent Activity %': parseFloat(recentPct.toFixed(1)),
         'Total Policies': deptPolicies.length
       };
-    }).filter(Boolean);
+    }).filter((dept): dept is NonNullable<typeof dept> => dept !== null);
   };
 
   const COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#6b7280'];
@@ -126,6 +140,14 @@ export default function DepartmentAnalysis() {
   const deptStats = getDepartmentStats();
   const selectedData = getSelectedDeptData();
   const comparison = getDepartmentComparison();
+  
+  if (!selectedData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div>No department data available</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
