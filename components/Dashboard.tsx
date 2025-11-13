@@ -7,7 +7,7 @@ import StatCard from './StatCard';
 import DepartmentChart from './DepartmentChart';
 import PriorityChart from './PriorityChart';
 import PolicyTable from './PolicyTable';
-import { FileText, TrendingUp, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
+import { FileText, TrendingUp, AlertCircle, CheckCircle, Calendar, Info } from 'lucide-react';
 
 export default function Dashboard() {
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -147,7 +147,24 @@ export default function Dashboard() {
             icon={FileText}
           />
           <StatCard
-            title="Avg Relevance Score"
+            title={
+              <div className="flex items-center">
+                <span>Avg Relevance Score</span>
+                <div className="relative group ml-1">
+                  <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                  <div className="absolute z-10 hidden group-hover:block w-64 p-2 text-sm text-gray-700 bg-white border border-gray-200 rounded shadow-lg">
+                    <p className="font-semibold mb-1">Relevance Score (0-10):</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>9-10: Critical AI policy documents</li>
+                      <li>7-8: Significant AI policy content</li>
+                      <li>5-6: Moderate AI relevance</li>
+                      <li>3-4: Limited AI content</li>
+                      <li>0-2: Minimal or no AI relevance</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            }
             value={`${stats.avgRelevanceScore}/10`}
             icon={TrendingUp}
           />
