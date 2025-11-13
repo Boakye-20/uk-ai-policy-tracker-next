@@ -23,7 +23,7 @@ export default function DepartmentAnalysis() {
         // Set first department as default
         const depts = [...new Set(result.data
           .map((p: Policy) => p.dept)
-          .filter((d): d is string => typeof d === 'string' && d.length > 0))];
+          .filter((d: any): d is string => typeof d === 'string' && d.length > 0))];
           
         if (depts.length > 0) {
           setSelectedDept(depts[0]);
@@ -36,7 +36,7 @@ export default function DepartmentAnalysis() {
     }
   };
 
-  const departments = [...new Set(policies.map(p => p.dept).filter((d): d is string => Boolean(d)))].sort();
+  const departments = [...new Set(policies.map(p => p.dept).filter((d: any): d is string => Boolean(d)))].sort();
 
   // Department overview stats
   const getDepartmentStats = () => {
