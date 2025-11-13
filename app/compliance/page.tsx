@@ -8,7 +8,7 @@ import { AlertCircle, CheckCircle, Clock, ExternalLink, Filter } from 'lucide-re
 export default function ComplianceTracker() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'critical' | 'high' | 'action'>('action');
+  const [filter, setFilter] = useState<'all' | 'critical' | 'high'>('critical');
 
   useEffect(() => {
     fetchPolicies();
@@ -32,13 +32,10 @@ export default function ComplianceTracker() {
         return policies.filter(p => p.priority_category === '1-Critical');
       case 'high':
         return policies.filter(p => p.priority_category === '2-High');
-      case 'action':
-        return policies.filter(p => p.requires_action === 'Yes');
       default:
         return policies.filter(p => 
           p.priority_category === '1-Critical' || 
-          p.priority_category === '2-High' || 
-          p.requires_action === 'Yes'
+          p.priority_category === '2-High'
         );
     }
   };
@@ -72,12 +69,11 @@ export default function ComplianceTracker() {
   const filteredPolicies = getFilteredPolicies();
   const criticalCount = policies.filter(p => p.priority_category === '1-Critical').length;
   const highCount = policies.filter(p => p.priority_category === '2-High').length;
-  const actionCount = policies.filter(p => p.requires_action === 'Yes').length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
           <div className="flex items-center justify-between">
             <div>
@@ -97,16 +93,6 @@ export default function ComplianceTracker() {
             <Clock className="w-12 h-12 text-orange-500" />
           </div>
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Requires Action</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{actionCount}</p>
-            </div>
-            <CheckCircle className="w-12 h-12 text-blue-500" />
-          </div>
-        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -116,16 +102,6 @@ export default function ComplianceTracker() {
           <span className="text-sm font-medium text-gray-700">Filter by:</span>
         </div>
         <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setFilter('action')}
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-              filter === 'action'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Requires Action ({actionCount})
-          </button>
           <button
             onClick={() => setFilter('critical')}
             className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
@@ -207,11 +183,6 @@ export default function ComplianceTracker() {
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
                           {policy.policy_type}
                         </span>
-                        {policy.requires_action === 'Yes' && (
-                          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded-full font-semibold">
-                            Action Required
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

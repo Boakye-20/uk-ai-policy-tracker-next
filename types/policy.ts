@@ -51,6 +51,5 @@ export interface DashboardStats {
   totalPolicies: number;
   avgRelevanceScore: number;
   highPriorityCount: number;
-  requiresActionCount: number;
   recentPoliciesCount: number;
 }

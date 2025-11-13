@@ -3,7 +3,7 @@
 import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
-  title: string;
+  title: React.ReactNode; // Changed from string to ReactNode
   value: string | number;
   icon: LucideIcon;
   change?: string;

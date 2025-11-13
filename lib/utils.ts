@@ -9,10 +9,6 @@ export function calculateDashboardStats(policies: Policy[]): DashboardStats {
     (p) => p.priority_category === '1-Critical' || p.priority_category === '2-High'
   ).length;
   
-  const requiresActionCount = policies.filter(
-    (p) => p.requires_action === 'Yes'
-  ).length;
-  
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   
@@ -25,7 +21,6 @@ export function calculateDashboardStats(policies: Policy[]): DashboardStats {
     totalPolicies,
     avgRelevanceScore: Math.round(avgRelevanceScore * 10) / 10,
     highPriorityCount,
-    requiresActionCount,
     recentPoliciesCount,
   };
 }

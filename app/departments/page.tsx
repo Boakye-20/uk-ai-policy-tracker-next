@@ -21,12 +21,17 @@ export default function DepartmentAnalysis() {
       setPolicies(result.data);
       if (result.data && result.data.length > 0) {
         // Set first department as default
-        const depts = [...new Set(result.data
-          .map((p: Policy) => p.dept)
-          .filter((d: any): d is string => typeof d === 'string' && d.length > 0))];
+        const depts = [...new Set<string>(
+          result.data
+            .map((p: Policy) => p.dept)
+            .filter((d: unknown): d is string => typeof d === 'string' && d.length > 0)
+        )];
           
         if (depts.length > 0) {
-          setSelectedDept(depts[0]);
+          const firstDept = depts[0];
+          if (firstDept) {
+            setSelectedDept(firstDept);
+          }
         }
       }
     } catch (error) {
