@@ -3,20 +3,19 @@
 import { useEffect, useState } from 'react';
 import { Policy } from '@/types/policy';
 import { formatDate } from '@/lib/utils';
-import { Search, Filter, Download, ExternalLink, ChevronDown } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink } from 'lucide-react';
 
 export default function PolicyExplorer() {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [filteredPolicies, setFilteredPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date-desc');
   const [filters, setFilters] = useState({
     dept: '',
     policyType: '',
-    priority: '',
     sector: '',
     aiApplication: '',
+    stage: '',
     dateFrom: '',
     dateTo: '',
   });
@@ -35,6 +34,8 @@ export default function PolicyExplorer() {
     try {
       const response = await fetch('/api/policies');
       const result = await response.json();
+      
+      // The API now returns only AI-relevant policies
       setPolicies(result.data);
       setFilteredPolicies(result.data);
     } catch (error) {
@@ -45,12 +46,11 @@ export default function PolicyExplorer() {
   };
 
   const applyFilters = () => {
-    let result = [...policies];
+    let filtered = [...policies];
 
-    // Search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(p => 
+      filtered = filtered.filter(p => 
         p.title?.toLowerCase().includes(term) ||
         p.description?.toLowerCase().includes(term) ||
         p.ai_summary?.toLowerCase().includes(term) ||
@@ -58,72 +58,21 @@ export default function PolicyExplorer() {
       );
     }
 
-    // Department filter
-    if (filters.dept) {
-      result = result.filter(p => p.dept === filters.dept);
-    }
-
-    // Policy type filter
-    if (filters.policyType) {
-      result = result.filter(p => p.policy_type === filters.policyType);
-    }
-
-    // Priority filter
-    if (filters.priority) {
-      result = result.filter(p => p.priority_category === filters.priority);
-    }
-
-    // Sector filter
-    if (filters.sector) {
-      result = result.filter(p => p.sector_focus === filters.sector);
-    }
-
-    // AI Application filter
-    if (filters.aiApplication) {
-      result = result.filter(p => p.ai_application === filters.aiApplication);
-    }
-
-    // Date range filter
+    if (filters.dept) filtered = filtered.filter(p => p.dept === filters.dept);
+    if (filters.policyType) filtered = filtered.filter(p => p.policy_type === filters.policyType);
+    if (filters.sector) filtered = filtered.filter(p => p.sector_focus === filters.sector);
+    if (filters.aiApplication) filtered = filtered.filter(p => p.ai_application === filters.aiApplication);
+    if (filters.stage) filtered = filtered.filter(p => p.stage === filters.stage);
+    
     if (filters.dateFrom) {
-      result = result.filter(p => new Date(p.published_date) >= new Date(filters.dateFrom));
+      filtered = filtered.filter(p => new Date(p.published_date) >= new Date(filters.dateFrom));
     }
     if (filters.dateTo) {
-      result = result.filter(p => new Date(p.published_date) <= new Date(filters.dateTo));
+      filtered = filtered.filter(p => new Date(p.published_date) <= new Date(filters.dateTo));
     }
 
-    // Apply sorting
-    result = sortPolicies(result);
-
-    setFilteredPolicies(result);
+    setFilteredPolicies(filtered);
     setCurrentPage(1);
-  };
-
-  const sortPolicies = (policies: Policy[]) => {
-    const [field, order] = sortBy.split('-');
-    return [...policies].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (field) {
-        case 'title':
-          comparison = a.title.localeCompare(b.title);
-          break;
-        case 'date':
-          comparison = new Date(a.published_date).getTime() - new Date(b.published_date).getTime();
-          break;
-        case 'department':
-          comparison = a.dept.localeCompare(b.dept);
-          break;
-        case 'priority':
-          const priorityOrder = { '1-Critical': 4, '2-High': 3, '3-Medium': 2, '4-Low': 1, '5-Minimal': 0 };
-          comparison = (priorityOrder[a.priority_category as keyof typeof priorityOrder] || 0) - 
-                      (priorityOrder[b.priority_category as keyof typeof priorityOrder] || 0);
-          break;
-        default:
-          comparison = 0;
-      }
-      
-      return order === 'desc' ? -comparison : comparison;
-    });
   };
 
   const clearFilters = () => {
@@ -131,9 +80,9 @@ export default function PolicyExplorer() {
     setFilters({
       dept: '',
       policyType: '',
-      priority: '',
       sector: '',
       aiApplication: '',
+      stage: '',
       dateFrom: '',
       dateTo: '',
     });
@@ -142,37 +91,37 @@ export default function PolicyExplorer() {
   const exportResults = () => {
     const csv = [
       Object.keys(filteredPolicies[0]).join(','),
-      ...filteredPolicies.map(p => Object.values(p).join(','))
+      ...filteredPolicies.map(p => Object.values(p).map(v => `"${v}"`).join(','))
     ].join('\n');
     
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'policy-export.csv';
+    a.download = `ai-policy-export-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
 
-  const getPriorityColor = (priority: string) => {
-    if (priority.includes('Critical')) return 'bg-red-100 text-red-800';
-    if (priority.includes('High')) return 'bg-orange-100 text-orange-800';
-    if (priority.includes('Medium')) return 'bg-yellow-100 text-yellow-800';
-    if (priority.includes('Low')) return 'bg-green-100 text-green-800';
-    return 'bg-gray-100 text-gray-800';
+  const getTypeColor = (type: string) => {
+    if (type === 'Regulation & Compliance') return 'bg-red-100 text-red-800 border-red-200';
+    if (type === 'Strategy & Frameworks') return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (type === 'Implementation Guidance') return 'bg-green-100 text-green-800 border-green-200';
+    if (type === 'Research & Analysis') return 'bg-purple-100 text-purple-800 border-purple-200';
+    if (type === 'Funding & Investment') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  // Get unique values for filters
   const departments = [...new Set(policies.map(p => p.dept))].sort();
   const policyTypes = [...new Set(policies.map(p => p.policy_type))].sort();
-  const priorities = ['1-Critical', '2-High', '3-Medium', '4-Low', '5-Minimal'];
   const sectors = [...new Set(policies.map(p => p.sector_focus))].sort();
   const aiApplications = [...new Set(policies.map(p => p.ai_application))].sort();
+  const stages = [...new Set(policies.map(p => p.stage).filter(Boolean))].sort();
 
-  // Pagination
+  const getCurrentPolicies = () => filteredPolicies;
   const totalPages = Math.ceil(filteredPolicies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPolicies = filteredPolicies.slice(startIndex, endIndex);
+  const currentPolicies = getCurrentPolicies().slice(startIndex, endIndex);
 
   if (loading) {
     return (
@@ -191,7 +140,7 @@ export default function PolicyExplorer() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search policies by title, description, summary, or topics..."
+              placeholder="Search AI policies by title, description, summary, or topics..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
@@ -209,41 +158,11 @@ export default function PolicyExplorer() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold">Policy Explorer</h1>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="date-desc">Sort by: Newest First</option>
-              <option value="date-asc">Sort by: Oldest First</option>
-              <option value="title-asc">Sort by: Title (A-Z)</option>
-              <option value="title-desc">Sort by: Title (Z-A)</option>
-              <option value="department-asc">Sort by: Department (A-Z)</option>
-              <option value="priority-desc">Sort by: Priority (High to Low)</option>
-            </select>
-            <ChevronDown className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
-          </div>
-          <button
-            onClick={exportResults}
-            disabled={filteredPolicies.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </button>
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Filter className="w-5 h-5" />
-            Advanced Filters
+            Filter Options
           </h3>
           <button
             onClick={clearFilters}
@@ -253,7 +172,7 @@ export default function PolicyExplorer() {
           </button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
             <select
@@ -278,22 +197,6 @@ export default function PolicyExplorer() {
               <option value="">All</option>
               {policyTypes.map(type => (
                 <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-            <select
-              value={filters.priority}
-              onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="">All</option>
-              {priorities.map(priority => (
-                <option key={priority} value={priority}>
-                  {priority.replace(/^\d+-/, '')}
-                </option>
               ))}
             </select>
           </div>
@@ -327,6 +230,20 @@ export default function PolicyExplorer() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Stage</label>
+            <select
+              value={filters.stage}
+              onChange={(e) => setFilters({ ...filters, stage: e.target.value })}
+              className="w-full border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="">All</option>
+              {stages.map(stage => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
             <input
               type="date"
@@ -349,11 +266,13 @@ export default function PolicyExplorer() {
       </div>
 
       {/* Results Summary */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <p className="text-blue-800">
-          Showing <strong>{filteredPolicies.length}</strong> {filteredPolicies.length === 1 ? 'policy' : 'policies'}
-          {searchTerm && ` matching "${searchTerm}"`}
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-1">
+          <p className="text-blue-800">
+            <span>Showing <strong>{filteredPolicies.length}</strong> {filteredPolicies.length === 1 ? 'policy' : 'policies'}</span>
+            {searchTerm && <span> matching "{searchTerm}"</span>}
+          </p>
+        </div>
       </div>
 
       {/* Policy Cards */}
@@ -367,10 +286,7 @@ export default function PolicyExplorer() {
                   <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                     {policy.dept}
                   </span>
-                  <span className={`px-2 py-1 text-xs rounded font-semibold ${getPriorityColor(policy.priority_category)}`}>
-                    {policy.priority_category.replace(/^\d+-/, '')}
-                  </span>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                  <span className={`px-3 py-1 text-xs rounded-full font-semibold border ${getTypeColor(policy.policy_type)}`}>
                     {policy.policy_type}
                   </span>
                   <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">
@@ -378,9 +294,9 @@ export default function PolicyExplorer() {
                   </span>
                 </div>
               </div>
-              <div className="text-right text-sm text-gray-500">
-                <div>{formatDate(policy.published_date)}</div>
-                <div className="font-semibold text-primary-600 mt-1">Score: {policy.relevance_score.toFixed(1)}</div>
+              <div className="text-right text-sm text-gray-500 ml-4">
+                <div className="font-medium">{formatDate(policy.published_date)}</div>
+                <div className="text-xs mt-1">{policy.recency}</div>
               </div>
             </div>
             
@@ -397,7 +313,6 @@ export default function PolicyExplorer() {
               <div className="flex gap-4 text-sm text-gray-600">
                 <span><strong>Sector:</strong> {policy.sector_focus}</span>
                 <span><strong>Stage:</strong> {policy.stage}</span>
-                <span><strong>Impact:</strong> {policy.business_impact}</span>
               </div>
               <a
                 href={policy.url}

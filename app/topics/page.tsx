@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Policy } from '@/types/policy';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Treemap } from 'recharts';
-import { Tag, TrendingUp, Search } from 'lucide-react';
+import { Tag, TrendingUp, Search, ExternalLink } from 'lucide-react';
 
 export default function TopicIntelligence() {
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -18,8 +18,10 @@ export default function TopicIntelligence() {
   const fetchPolicies = async () => {
     try {
       const response = await fetch('/api/policies');
+      if (!response.ok) throw new Error('Failed to fetch policies');
       const result = await response.json();
       setPolicies(result.data);
+      console.log(`Loaded ${result.data.length} AI policies for topic analysis`);
     } catch (error) {
       console.error('Error fetching policies:', error);
     } finally {
@@ -121,13 +123,46 @@ export default function TopicIntelligence() {
     ).slice(0, 50);
   };
 
-  // Get policies for selected topic
+  // Pagination state for topic policies
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Get policies for selected topic with pagination
   const getTopicPolicies = (topic: string) => {
-    return policies
-      .filter(p => p.key_topics && p.key_topics.toLowerCase().includes(topic.toLowerCase()))
-      .sort((a, b) => b.relevance_score - a.relevance_score)
-      .slice(0, 10);
+    if (!topic) return [];
+    const searchTerm = topic.toLowerCase();
+    const matchingPolicies = policies.filter(p => {
+      if (!p.key_topics) return false;
+      const topics = p.key_topics.toLowerCase().split(',').map(t => t.trim());
+      return topics.includes(searchTerm);
+    });
+    
+    // Debug log for topic counts
+    if (selectedTopic === topic) {
+      console.log(`Topic: ${topic}`);
+      console.log(`- Policies with this topic: ${matchingPolicies.length}`);
+      const uniqueTopics = new Set<string>();
+      policies.forEach(p => {
+        if (p.key_topics) {
+          p.key_topics.toLowerCase().split(',').map(t => t.trim()).forEach(t => uniqueTopics.add(t));
+        }
+      });
+      console.log(`- Total unique topics: ${uniqueTopics.size}`);
+    }
+    
+    return matchingPolicies;
   };
+
+  // Get current policies for display with pagination
+  const getCurrentTopicPolicies = () => {
+    const allPolicies = selectedTopic ? getTopicPolicies(selectedTopic) : [];
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return allPolicies.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  const totalTopicPages = selectedTopic 
+    ? Math.ceil(getTopicPolicies(selectedTopic).length / itemsPerPage) 
+    : 0;
 
   if (loading) {
     return (
@@ -177,7 +212,9 @@ export default function TopicIntelligence() {
             <div>
               <p className="text-sm font-medium text-gray-600">Avg Topics per Policy</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {(policies.reduce((sum, p) => sum + (p.topics_count || 0), 0) / policies.length).toFixed(1)}
+                {policies.length > 0 
+                  ? (policies.reduce((sum, p) => sum + (p.topics_count || 0), 0) / policies.length).toFixed(1)
+                  : '0.0'}
               </p>
             </div>
             <Tag className="w-12 h-12 text-purple-500" />
@@ -308,16 +345,31 @@ export default function TopicIntelligence() {
 
           {/* Policies with this Topic */}
           <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Top Policies Mentioning "{selectedTopic}"
-            </h3>
-            <div className="space-y-3">
-              {topicPolicies.map((policy, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Policies Mentioning "{selectedTopic}" ({getTopicPolicies(selectedTopic).length})
+              </h3>
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {totalTopicPages}
+              </div>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              {getCurrentTopicPolicies().map((policy, index) => (
+                <a 
+                  key={index} 
+                  href={policy.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block border border-gray-200 rounded-lg p-4 hover:border-primary-300 hover:shadow-md transition-all"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">{policy.title}</h4>
-                      <div className="flex gap-2 mb-2">
+                      <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-primary-600">
+                        {policy.title}
+                        <ExternalLink className="inline-block w-4 h-4 ml-1 text-gray-400 group-hover:text-primary-600" />
+                      </h4>
+                      <div className="flex flex-wrap gap-2 mb-2">
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                           {policy.dept}
                         </span>
@@ -325,16 +377,92 @@ export default function TopicIntelligence() {
                           {policy.policy_type}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">{policy.ai_summary}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{policy.ai_summary || policy.description}</p>
                     </div>
                     <div className="ml-4 text-right">
-                      <div className="text-lg font-bold text-primary-600">{policy.relevance_score.toFixed(1)}</div>
-                      <div className="text-xs text-gray-500">Score</div>
+                      <div className="text-sm text-gray-500">
+                        {policy.published_date ? new Date(policy.published_date).getFullYear() : 'N/A'}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalTopicPages > 1 && (
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                <div className="text-sm text-gray-700">
+                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, getTopicPolicies(selectedTopic).length)} to{' '}
+                  {Math.min(currentPage * itemsPerPage, getTopicPolicies(selectedTopic).length)} of{' '}
+                  {getTopicPolicies(selectedTopic).length} policies
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="First page"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Previous page"
+                  >
+                    ‹
+                  </button>
+                  
+                  {Array.from({ length: Math.min(5, totalTopicPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalTopicPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalTopicPages - 2) {
+                      pageNum = totalTopicPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-10 h-8 rounded text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-primary-600 text-white border-primary-600'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                        }`}
+                        aria-current={currentPage === pageNum ? 'page' : undefined}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalTopicPages))}
+                    disabled={currentPage === totalTopicPages}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Next page"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalTopicPages)}
+                    disabled={currentPage === totalTopicPages}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Last page"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

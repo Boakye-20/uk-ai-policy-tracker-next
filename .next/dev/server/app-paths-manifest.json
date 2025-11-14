@@ -1,0 +1,9 @@
+{
+  "/api/policies/route": "app/api/policies/route.js",
+  "/departments/page": "app/departments/page.js",
+  "/regulations/page": "app/regulations/page.js",
+  "/page": "app/page.js",
+  "/policy-explorer/page": "app/policy-explorer/page.js",
+  "/about/page": "app/about/page.js",
+  "/topics/page": "app/topics/page.js"
+}

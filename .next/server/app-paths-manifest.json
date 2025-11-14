@@ -1,6 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/topics/page": "app/topics/page.js",
-  "/compliance/page": "app/compliance/page.js",
-  "/policy-explorer/page": "app/policy-explorer/page.js"
-}
