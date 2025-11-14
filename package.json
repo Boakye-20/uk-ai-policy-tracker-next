@@ -6,9 +6,7 @@
         "dev": "NODE_OPTIONS='--openssl-legacy-provider' next dev",
         "build": "npm install --legacy-peer-deps && next build",
         "start": "next start",
-        "lint": "next lint",
-        "install": "npm install --legacy-peer-deps",
-        "postinstall": "next build"
+        "lint": "next lint"
     },
     "dependencies": {
         "csv-parser": "^3.2.0",
