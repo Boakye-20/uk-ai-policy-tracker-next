@@ -2,7 +2,6 @@
 const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
-    output: 'standalone',
     productionBrowserSourceMaps: false,
 
     // Webpack configuration for compatibility
@@ -44,18 +43,8 @@ const nextConfig = {
         serverActions: {
             allowedOrigins: ['aipolicy.local:3000', 'localhost:3000', 'localhost:3001']
         },
-        // Turbopack configuration
-        turbo: {
-            rules: {}
-        },
-        // Turbotrace configuration for better debugging
-        turbotrace: {
-            contextDirectory: __dirname
-        },
         // Enable modern features
-        optimizeCss: true,
-        optimizePackageImports: ['lucide-react'],
-        serverComponentsExternalPackages: ['sharp', 'onnxruntime-node']
+        optimizePackageImports: ['lucide-react']
     }
 }
 
