@@ -205,11 +205,11 @@ export default function About() {
                     </p>
 
                     <p className="text-gray-700 mb-4">
-                        Paul is a developer and AI implementation specialist focused on building data-driven applications that solve real business problems. His recent work includes enterprise AI systems for financial services, automation tools for business intelligence, and several portfolio projects demonstrating end-to-end product development.
+                        Paul is a Data and AI Solutions specialist focused on building data-driven applications that solve real business problems. His recent work includes enterprise AI systems for financial services, automation tools for business intelligence, and several portfolio projects demonstrating end-to-end product development.
                     </p>
 
                     <p className="text-gray-700 mb-6">
-                        With a BSc in Politics from the London School of Economics and experience spanning financial services, consulting, and technical implementation, PK brings a unique blend of business acumen and technical expertise to every project. He specialises in taking complex datasets and regulatory landscapes and transforming them into actionable platforms and practical business intelligence tools.
+                        With a BSc in Politics from the London School of Economics and experience spanning financial services, consulting, and technical implementation, Paul brings a unique blend of business acumen and technical expertise to every project. He specialises in taking complex datasets and regulatory landscapes and transforming them into actionable platforms and practical business intelligence tools.
                     </p>
                 </div>
 
