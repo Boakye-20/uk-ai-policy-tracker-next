@@ -4,23 +4,26 @@ import { getPolicies, filterPolicies } from '@/lib/data';
 // This prevents static optimization and ensures the route is dynamic
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-    request: Request,
-    { searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }
-) {
+export async function GET(request: Request) {
     try {
-        const { dept, priority, policyType, sector, aiApplication } = searchParams;
+        // Get search params from the URL
+        const { searchParams } = new URL(request.url);
+        const dept = searchParams.get('dept');
+        const priority = searchParams.get('priority');
+        const policyType = searchParams.get('policyType');
+        const sector = searchParams.get('sector');
+        const aiApplication = searchParams.get('aiApplication');
 
         // Get all policies
         const allPolicies = getPolicies();
 
         // Apply filters
         const filteredData = filterPolicies(allPolicies, {
-            dept: Array.isArray(dept) ? dept[0] : dept,
-            priority: Array.isArray(priority) ? priority[0] : priority,
-            policyType: Array.isArray(policyType) ? policyType[0] : policyType,
-            sector: Array.isArray(sector) ? sector[0] : sector,
-            aiApplication: Array.isArray(aiApplication) ? aiApplication[0] : aiApplication
+            dept,
+            priority,
+            policyType,
+            sector,
+            aiApplication
         });
 
         return NextResponse.json({ data: filteredData });
