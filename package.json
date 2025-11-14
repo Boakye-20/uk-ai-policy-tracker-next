@@ -1,34 +1,34 @@
 {
-  "name": "uk-ai-policy-tracker",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "NODE_OPTIONS='--openssl-legacy-provider' next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "csv-parser": "^3.2.0",
-    "csv-stringify": "^6.6.0",
-    "date-fns": "^3.6.0",
-    "lucide-react": "^0.263.1",
-    "next": "^16.0.3",
-    "papaparse": "^5.4.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "recharts": "^2.12.7"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/papaparse": "^5.3.14",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.4.19",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.5",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
-  }
+    "name": "uk-ai-policy-tracker",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "NODE_OPTIONS='--openssl-legacy-provider' next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "csv-parser": "^3.2.0",
+        "csv-stringify": "^6.6.0",
+        "date-fns": "^3.6.0",
+        "lucide-react": "^0.300.0",
+        "next": "^16.0.3",
+        "papaparse": "^5.4.1",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "recharts": "^2.12.7"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/papaparse": "^5.3.14",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
+        "autoprefixer": "^10.4.19",
+        "eslint": "^8",
+        "eslint-config-next": "14.2.5",
+        "postcss": "^8",
+        "tailwindcss": "^3.4.1",
+        "typescript": "^5"
+    }
 }
