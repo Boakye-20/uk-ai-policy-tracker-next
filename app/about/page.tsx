@@ -1,6 +1,6 @@
 'use client';
 
-import { Github, Linkedin, ExternalLink, Shield, TrendingUp, Database } from 'lucide-react';
+import { Github, Linkedin, ExternalLink, Shield, TrendingUp, Database, Search } from 'lucide-react';
 
 export default function About() {
     return (
