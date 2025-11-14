@@ -7,7 +7,8 @@
         "build": "npm install --legacy-peer-deps && next build",
         "start": "next start",
         "lint": "next lint",
-        "install": "npm install --legacy-peer-deps"
+        "install": "npm install --legacy-peer-deps",
+        "postinstall": "next build"
     },
     "dependencies": {
         "csv-parser": "^3.2.0",
@@ -18,7 +19,8 @@
         "papaparse": "^5.4.1",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
-        "recharts": "^2.12.7"
+        "recharts": "^2.12.7",
+        "workflow": "^4.0.1-beta.13"
     },
     "devDependencies": {
         "@types/node": "^20",

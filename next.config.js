@@ -1,10 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    swcMinify: true,
+    output: 'standalone',
+    productionBrowserSourceMaps: false,
 
     // Webpack configuration for compatibility
-    webpack: (config) => {
-        config.resolve.fallback = { fs: false };
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                fs: false,
+                net: false,
+                tls: false
+            };
+        }
         return config;
     },
 
@@ -24,6 +33,11 @@ const nextConfig = {
         ]
     },
 
+    // Optimize build output
+    compress: true,
+    generateEtags: true,
+    poweredByHeader: false,
+
     // Experimental features
     experimental: {
         // Server actions configuration
@@ -37,7 +51,11 @@ const nextConfig = {
         // Turbotrace configuration for better debugging
         turbotrace: {
             contextDirectory: __dirname
-        }
+        },
+        // Enable modern features
+        optimizeCss: true,
+        optimizePackageImports: ['lucide-react'],
+        serverComponentsExternalPackages: ['sharp', 'onnxruntime-node']
     }
 }
 
