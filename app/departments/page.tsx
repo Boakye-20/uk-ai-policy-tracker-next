@@ -54,7 +54,7 @@ export default function DepartmentAnalysis() {
             setPolicies(result.data);
             console.log(`Loaded ${result.data.length} AI policies for department analysis`); // Debug log
             if (result.data.length > 0) {
-                const firstDept = [...new Set(result.data.map((p: Policy) => p.dept))].sort()[0];
+                const firstDept = [...new Set(result.data.map((p: Policy) => p.dept))].sort()[0] as string;
                 setSelectedDept(firstDept);
             }
         } catch (error) {
